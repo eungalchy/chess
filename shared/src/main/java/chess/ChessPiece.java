@@ -75,6 +75,10 @@ public class ChessPiece {
             RookMovesCalculator calculator = new RookMovesCalculator();
             return calculator.pieceMoves(board, myPosition);
         }
+        if (type == PieceType.QUEEN) {
+            QueenMovesCalculator calculator = new QueenMovesCalculator();
+            return calculator.pieceMoves(board, myPosition);
+        }
         return new ArrayList<>();
     }
 }
