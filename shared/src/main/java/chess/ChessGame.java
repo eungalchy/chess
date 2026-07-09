@@ -13,6 +13,8 @@ import java.util.Objects;
 public class ChessGame {
     private ChessBoard board;
     private TeamColor teamTurn;
+    private java.util.Set<ChessPosition> movedPosition = new java.util.HashSet<>();
+
 
     public ChessGame() {
         this.board = new ChessBoard();
@@ -98,6 +100,7 @@ public class ChessGame {
         }
         board.addPiece(move.getEndPosition(), moving);
         board.addPiece(start,null);
+        movedPosition.add(start);
 
         if (teamTurn == TeamColor.WHITE) {
             teamTurn = TeamColor.BLACK;
