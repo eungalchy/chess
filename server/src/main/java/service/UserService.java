@@ -13,6 +13,9 @@ public class UserService {
     }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null || request.email() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
         UserData existing = dataAccess.getUser(request.username());
         if (existing!=null) {
             throw new DataAccessException("Error: already taken");
@@ -28,6 +31,9 @@ public class UserService {
     }
 
     public LoginResult login(LoginRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
         UserData user = dataAccess.getUser(request.username());
         if (user == null || !user.password().equals(request.password())) {
             throw new DataAccessException("Error: unauthorized");

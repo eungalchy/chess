@@ -14,6 +14,9 @@ public class GameService {
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
         AuthData auth = dataAccess.getAuth(authToken);
+        if (request.gameName() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
         if (auth == null) {
             throw new DataAccessException("Error: unauthorized");
         }
