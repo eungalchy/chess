@@ -3,7 +3,9 @@ package server;
 import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
 import io.javalin.*;
+import model.RegisterRequest;
 import service.ClearService;
+import service.UserService;
 
 public class Server {
 
@@ -18,6 +20,13 @@ public class Server {
             new ClearService(dataAccess).clear();
             ctx.status(200);
             ctx.result("{}");
+        });
+
+        javalin.post("/user", ctx -> {
+            var request = new com.google.gson.Gson().fromJson(ctx.body(), RegisterRequest.class);
+            var result = new UserService(dataAccess).register(request);
+            ctx.status(200);
+            ctx.result(new com.google.gson.Gson().toJson(result));
         });
 
     }
