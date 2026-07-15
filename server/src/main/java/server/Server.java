@@ -4,9 +4,11 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import io.javalin.*;
+import model.CreateGameRequest;
 import model.LoginRequest;
 import model.RegisterRequest;
 import service.ClearService;
+import service.GameService;
 import service.UserService;
 
 public class Server {
@@ -43,6 +45,14 @@ public class Server {
             new UserService(dataAccess).logout(authToken);
             ctx.status(200);
             ctx.result("{}");
+        });
+
+        javalin.post("/game", ctx -> {
+            String authToken = ctx.header("authorization");
+            var request = new com.google.gson.Gson().fromJson(ctx.body(), CreateGameRequest.class);
+            var result = new GameService(dataAccess).createGame(authToken, request);
+            ctx.status(200);
+            ctx.result(new com.google.gson.Gson().toJson(result));
         });
 
         javalin.exception(DataAccessException.class, (e, ctx) -> {
