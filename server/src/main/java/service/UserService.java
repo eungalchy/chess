@@ -2,12 +2,11 @@ package service;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import model.AuthData;
-import model.RegisterRequest;
-import model.RegisterResult;
-import model.UserData;
-
+import model.*;
+import javax.xml.crypto.Data;
 import java.util.UUID;
+import model.LoginRequest;
+import model.LoginResult;
 
 public class UserService {
     private final DataAccess dataAccess;
@@ -29,5 +28,16 @@ public class UserService {
         dataAccess.createAuth(auth);
 
         return new RegisterResult(request.username(), authToken);
+    }
+
+    public LoginResult login(LoginRequest request) throws DataAccessException {
+        UserData user = dataAccess.getUser(request.username());
+        if (user == null || !user.password().equals(request.password())) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, request.username());
+        dataAccess.createAuth(auth);
+        return new LoginResult(request.username(), authToken);
     }
 }
