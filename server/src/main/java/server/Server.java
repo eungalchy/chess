@@ -1,6 +1,7 @@
 package server;
 
 import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import io.javalin.*;
 import model.LoginRequest;
@@ -35,6 +36,22 @@ public class Server {
             var result = new UserService(dataAccess).login(request);
             ctx.status(200);
             ctx.result(new com.google.gson.Gson().toJson(result));
+        });
+
+        javalin.exception(DataAccessException.class, (e, ctx) -> {
+            String message = e.getMessage();
+            int status;
+            if (message.contains("already taken")) {
+                status = 403;
+            } else if (message.contains("unauthorized")) {
+                status = 401;
+            } else if (message.contains("bad request")) {
+                status = 400;
+            } else {
+                status = 500;
+            }
+            ctx.status(status);
+            ctx.result(new com.google.gson.Gson().toJson(java.util.Map.of("message", message)));
         });
 
     }
