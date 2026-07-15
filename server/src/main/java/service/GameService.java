@@ -30,4 +30,34 @@ public class GameService {
         }
         return new ListGamesResult(dataAccess.listGames());
     }
+
+    public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
+        AuthData auth = dataAccess.getAuth(authToken);
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        GameData game = dataAccess.getGame(request.gameID());
+        if (game == null || request.playerColor() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        String username = auth.username();
+        GameData updated;
+        if (request.playerColor().equals("WHITE")) {
+            if (game.whiteUsername() != null) {
+                throw new DataAccessException("Error: already taken");
+            }
+            updated = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
+        } else if (request.playerColor().equals("BLACK")) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: already taken");
+            }
+            updated = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
+        } else {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        dataAccess.updateGame(updated);
+    }
 }

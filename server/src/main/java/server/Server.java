@@ -5,6 +5,7 @@ import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import io.javalin.*;
 import model.CreateGameRequest;
+import model.JoinGameRequest;
 import model.LoginRequest;
 import model.RegisterRequest;
 import service.ClearService;
@@ -60,6 +61,14 @@ public class Server {
             var result = new GameService(dataAccess).listGamesResult(authToken);
             ctx.status(200);
             ctx.result(new com.google.gson.Gson().toJson(result));
+        });
+
+        javalin.put("/game", ctx -> {
+            String authToken = ctx.header("authorization");
+            var request = new com.google.gson.Gson().fromJson(ctx.body(), JoinGameRequest.class);
+            new GameService(dataAccess).joinGame(authToken, request);
+            ctx.status(200);
+            ctx.result("{}");
         });
 
         javalin.exception(DataAccessException.class, (e, ctx) -> {
