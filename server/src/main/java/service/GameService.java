@@ -3,10 +3,7 @@ package service;
 import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import model.AuthData;
-import model.CreateGameRequest;
-import model.CreateGameResult;
-import model.GameData;
+import model.*;
 
 public class GameService {
     private final DataAccess dataAccess;
@@ -24,5 +21,13 @@ public class GameService {
         GameData game = new GameData(gameID, null, null, request.gameName(), new ChessGame());
         dataAccess.createGame(game);
         return new CreateGameResult(gameID);
+    }
+
+    public ListGamesResult listGamesResult(String authToken) throws DataAccessException {
+        AuthData auth = dataAccess.getAuth(authToken);
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+        return new ListGamesResult(dataAccess.listGames());
     }
 }

@@ -55,6 +55,13 @@ public class Server {
             ctx.result(new com.google.gson.Gson().toJson(result));
         });
 
+        javalin.get("/game", ctx -> {
+            String authToken = ctx.header("authorization");
+            var result = new GameService(dataAccess).listGamesResult(authToken);
+            ctx.status(200);
+            ctx.result(new com.google.gson.Gson().toJson(result));
+        });
+
         javalin.exception(DataAccessException.class, (e, ctx) -> {
             String message = e.getMessage();
             int status;
