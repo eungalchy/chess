@@ -38,6 +38,13 @@ public class Server {
             ctx.result(new com.google.gson.Gson().toJson(result));
         });
 
+        javalin.delete("/session", ctx -> {
+            String authToken = ctx.header("authorization");
+            new UserService(dataAccess).logout(authToken);
+            ctx.status(200);
+            ctx.result("{}");
+        });
+
         javalin.exception(DataAccessException.class, (e, ctx) -> {
             String message = e.getMessage();
             int status;
