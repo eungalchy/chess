@@ -2,7 +2,7 @@ package server;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryDataAccess;
+import dataaccess.MySqlDataAccess;
 import io.javalin.*;
 import model.CreateGameRequest;
 import model.JoinGameRequest;
@@ -16,10 +16,10 @@ public class Server {
 
     private final Javalin javalin;
 
-    public Server() {
+    public Server() throws DataAccessException {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
-        DataAccess dataAccess = new MemoryDataAccess();
+        DataAccess dataAccess = new MySqlDataAccess();
 
         javalin.delete("/db", ctx -> {
             new ClearService(dataAccess).clear();
@@ -98,7 +98,7 @@ public class Server {
         javalin.stop();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws DataAccessException {
         new Server().run(8080);
     }
 }
