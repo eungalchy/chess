@@ -53,11 +53,21 @@ public class MySqlDataAccess implements DataAccess{
 
     @Override
     public void clear() throws DataAccessException {
+        try (var conn = DatabaseManager.getConnection()) {
+            for (var table : new String[]{"auth", "game", "user"}) {
+                try (var ps = conn.prepareStatement("DELETE  FROM " + table)) {
+                    ps.executeUpdate();
+                }
+            }
+        } catch (java.sql.SQLException ex) {
+            throw new DataAccessException("Unable to clear database", ex);
+        }
 
     }
 
     @Override
     public void createUser(UserData user) throws DataAccessException {
+        
 
     }
 
