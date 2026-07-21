@@ -35,7 +35,7 @@ public class UserService {
             throw new DataAccessException("Error: bad request");
         }
         UserData user = dataAccess.getUser(request.username());
-        if (user == null || !user.password().equals(request.password())) {
+        if (user == null || !org.mindrot.jbcrypt.BCrypt.checkpw(request.password(), user.password())) {
             throw new DataAccessException("Error: unauthorized");
         }
         String authToken = UUID.randomUUID().toString();
