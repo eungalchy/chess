@@ -36,6 +36,39 @@ public class MySqlDataAccessTests {
         assertNull(dataAccess.getUser("nobody"));
     }
 
-    
+    @Test
+    public void createAuthSuccess() throws DataAccessException {
+        dataAccess.createAuth(new AuthData("token123", "alice"));
+        assertNotNull(dataAccess.getAuth("token123"));
+    }
 
+    @Test
+    public void getAuthNotFound() throws DataAccessException {
+        assertNull(dataAccess.getAuth("nothing"));
+    }
+
+    @Test
+    public void createAuthDuplicate() throws DataAccessException {
+        dataAccess.createAuth(new AuthData("token123", "alice"));
+        assertThrows(DataAccessException.class,
+                () -> dataAccess.createAuth(new AuthData("token123", "alice")));
+    }
+
+    @Test
+    public void getAuthSuccess() throws DataAccessException {
+        dataAccess.createAuth(new AuthData("token123", "alice"));
+        assertEquals("alice", dataAccess.getAuth("token123").username());
+    }
+
+    @Test
+    public void deleteAuthSuccess() throws DataAccessException {
+        dataAccess.createAuth(new AuthData("token123", "alice"));
+        dataAccess.deleteAuth("token123");
+        assertNull(dataAccess.getAuth("token123"));
+    }
+
+    @Test
+    public void deleteAuthNotFound() {
+        assertDoesNotThrow(() -> dataAccess.deleteAuth("nothing"));
+    }
 }
