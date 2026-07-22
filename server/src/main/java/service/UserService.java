@@ -20,7 +20,8 @@ public class UserService {
         if (existing!=null) {
             throw new DataAccessException("Error: already taken");
         }
-        UserData user = new UserData(request.username(), request.password(), request.email());
+        String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(request.password(), org.mindrot.jbcrypt.BCrypt.gensalt());
+        UserData user = new UserData(request.username(), hashed, request.email());
         dataAccess.createUser(user);
 
         String authToken = UUID.randomUUID().toString();

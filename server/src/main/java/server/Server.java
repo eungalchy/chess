@@ -16,10 +16,15 @@ public class Server {
 
     private final Javalin javalin;
 
-    public Server() throws DataAccessException {
+    public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
-        DataAccess dataAccess = new MySqlDataAccess();
+        DataAccess dataAccess;
+        try {
+            dataAccess = new MySqlDataAccess();
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Failed to initialize database", ex);
+        }
 
         javalin.delete("/db", ctx -> {
             new ClearService(dataAccess).clear();
@@ -82,6 +87,7 @@ public class Server {
                 status = 400;
             } else {
                 status = 500;
+                message = "Error: " + message;
             }
             ctx.status(status);
             ctx.result(new com.google.gson.Gson().toJson(java.util.Map.of("message", message)));
@@ -98,7 +104,7 @@ public class Server {
         javalin.stop();
     }
 
-    public static void main(String[] args) throws DataAccessException {
+    public static void main(String[] args) {
         new Server().run(8080);
     }
 }

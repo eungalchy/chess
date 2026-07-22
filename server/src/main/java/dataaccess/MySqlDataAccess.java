@@ -66,11 +66,10 @@ public class MySqlDataAccess implements DataAccess {
 
     @Override
     public void createUser(UserData user) throws DataAccessException {
-        String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(user.password(), org.mindrot.jbcrypt.BCrypt.gensalt());
         try (var conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement("INSERT INTO user (username, password, email) VALUES (?, ?, ?)")) {
                 ps.setString(1, user.username());
-                ps.setString(2, hashed);
+                ps.setString(2, user.password());
                 ps.setString(3, user.email());
                 ps.executeUpdate();
             }
