@@ -91,4 +91,10 @@ public class ServerFacade {
         return null;
 
     }
+
+    public void clear() throws Exception {
+        var httpRequest = buildRequest("DELETE", "/db", null, null);
+        var response = sendRequest(httpRequest);
+        handleResponse(response, null);
+    }
 }
