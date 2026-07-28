@@ -18,7 +18,7 @@ public class ServerFacade {
 
     public RegisterResult register(String username, String password, String email) throws Exception {
         var request = new RegisterRequest(username, password, email);
-        var httpRequest = buildRequest("POST", "/user", request);
+        var httpRequest = buildRequest("POST", "/user", request, null);
         var response = sendRequest(httpRequest);
         return handleResponse(response, RegisterResult.class);
     }
@@ -43,12 +43,15 @@ public class ServerFacade {
 
     }
 
-    private HttpRequest buildRequest(String method, String path, Object body) {
+    private HttpRequest buildRequest(String method, String path, Object body, String authToken) {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + path))
                 .method(method, makeRequestBody(body));
         if (body != null) {
             request.setHeader("Content-Type", "application/json");
+        }
+        if (authToken != null) {
+            request.setHeader("authorization", authToken);
         }
         return request.build();
     }
