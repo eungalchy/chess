@@ -44,11 +44,16 @@ public class ServerFacade {
     }
 
     public ListGamesResult listGames(String authToken) throws Exception {
-        return null;
+        var httpRequest = buildRequest("GET", "/game", null, authToken);
+        var response = sendRequest(httpRequest);
+        return handleResponse(response, ListGamesResult.class);
     }
 
     public void joinGame(String authToken, String playerColor, int gameID) throws Exception {
-
+        var request = new JoinGameRequest(playerColor, gameID);
+        var httpRequest = buildRequest("PUT", "/game", request, authToken);
+        var response = sendRequest(httpRequest);
+        handleResponse(response, null);
     }
 
     private HttpRequest buildRequest(String method, String path, Object body, String authToken) {
