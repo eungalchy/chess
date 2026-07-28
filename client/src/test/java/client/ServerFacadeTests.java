@@ -43,4 +43,78 @@ public class ServerFacadeTests {
             facade.register("player1", "password", "p1@email.com");
         });
     }
+
+    @Test
+    public void loginPositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        var result = facade.login("player1", "password");
+        assertTrue(result.authToken().length() > 10);
+    }
+
+    @Test
+    public void loginNegative() throws Exception {
+        assertThrows(Exception.class, () -> {
+            facade.login("nonexistent", "wrongpassword");
+        });
+    }
+
+    @Test
+    public void logoutPositive() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        assertDoesNotThrow(() -> facade.logout(authData.authToken()));
+    }
+
+    @Test
+    public void logoutNegative() throws Exception {
+        assertThrows(Exception.class, () -> {
+            facade.logout("invalid-token");
+        });
+    }
+
+    @Test
+    public void createGamePositive() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        var result = facade.createGame(authData.authToken(), "myGame");
+        assertTrue(result.gameID() > 0);
+    }
+
+    @Test
+    public void createGameNegative() throws Exception {
+        assertThrows(Exception.class, () -> {
+            facade.createGame("invalid-token", "myGame");
+        });
+    }
+
+    @Test
+    public void listGamesPositive() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        facade.createGame(authData.authToken(), "myGame");
+        var result = facade.listGames(authData.authToken());
+        assertEquals(1, result.games().size());
+    }
+
+    @Test
+    public void listGamesNegative() throws Exception {
+        assertThrows(Exception.class, () -> {
+            facade.listGames("invalid-token");
+        });
+    }
+
+    @Test
+    public void joinGamePositive() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        var gameResult = facade.createGame(authData.authToken(), "myGame");
+        assertDoesNotThrow(() -> facade.joinGame(authData.authToken(), "WHITE", gameResult.gameID()));
+    }
+
+    @Test
+    public void joinGameNegative() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        assertThrows(Exception.class, () -> {
+            facade.joinGame(authData.authToken(), "WHITE", 9999);
+        });
+    }
+
+
+
 }
