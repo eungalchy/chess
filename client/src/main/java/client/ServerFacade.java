@@ -24,15 +24,23 @@ public class ServerFacade {
     }
 
     public LoginResult login(String username, String password) throws Exception {
-        return null;
+        var request = new LoginRequest(username, password);
+        var httpRequest = buildRequest("POST", "/session", request, null);
+        var response = sendRequest(httpRequest);
+        return handleResponse(response, LoginResult.class);
     }
 
     public void logout(String authToken) throws Exception {
-
+        var httpRequest = buildRequest("DELETE", "/session", null, authToken);
+        var response = sendRequest(httpRequest);
+        handleResponse(response, null);
     }
 
     public CreateGameResult createGame(String authToken, String gameName) throws Exception {
-        return null;
+        var request = new CreateGameRequest(gameName);
+        var httpRequest = buildRequest("POST", "/game", request, authToken);
+        var response = sendRequest(httpRequest);
+        return handleResponse(response, CreateGameResult.class);
     }
 
     public ListGamesResult listGames(String authToken) throws Exception {
