@@ -5,7 +5,9 @@ import java.util.Scanner;
 import static ui.EscapeSequences.*;
 
 public class Repl {
-    private final PreloginClient preloginClient;
+    private final ServerFacade server;
+    private PreloginClient preloginClient;
+    private PostloginClient postloginClient;
     private State state = State.PRELOGIN;
 
     private enum State {
@@ -14,7 +16,7 @@ public class Repl {
     }
 
     public Repl(int port) {
-        ServerFacade server = new ServerFacade(port);
+        server = new ServerFacade(port);
         preloginClient = new PreloginClient(server);
     }
 
@@ -29,20 +31,35 @@ public class Repl {
             String line = scanner.nextLine();
 
             try {
-                result = preloginClient.eval(line);
-                System.out.print(result);
+                if (state == State.PRELOGIN) {
+                    result = preloginClient.eval(line);
+                    System.out.print(result);
 
-                if (preloginClient.isLoggedIn()) {
-                    // TODO: PostloginClient로 전환
+                    if (preloginClient.isLoggedIn()) {
+                        var authData = preloginClient.getAuthData();
+                        postloginClient = new PostloginClient(server, authData.authToken());
+                        state = State.POSTLOGIN;
+                        System.out.print("\n" + postloginClient.help());
+                    }
+                } else {
+                    result = postloginClient.eval(line);
+                    System.out.print(result);
+
+                    if (postloginClient.isLoggedOut()) {
+                        preloginClient = new PreloginClient(server);
+                        state = State.PRELOGIN;
+                        result = "";
+                        System.out.print("\n" + preloginClient.help());
+                    }
                 }
-            } catch (Throwable e) {
-                System.out.print(e.getMessage());
+                } catch(Throwable e){
+                    System.out.print(e.getMessage());
+                }
             }
+            System.out.println();
         }
-        System.out.println();
-    }
 
-    private void printPrompt() {
-        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+        private void printPrompt () {
+            System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+        }
     }
-}
