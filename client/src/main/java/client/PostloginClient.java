@@ -91,9 +91,9 @@ public class PostloginClient {
         if (params.length != 2) {
             throw new Exception("Expected: play <NUMBER> <WHITE|BLACK>");
         }
-        var gameID = getGameIDFromNumber(params[0]);
+        var game = getGameFromNumber(params[0]);
         var color = params[1].toUpperCase();
-        server.joinGame(authToken, color, gameID);
+        server.joinGame(authToken, color, game.gameID());
         boolean whitePerspective = color.equals("WHITE");
         BoardPrinter.printBoard(whitePerspective);
         return "Joined game as " + color;
@@ -103,12 +103,12 @@ public class PostloginClient {
         if (params.length != 1) {
             throw new Exception("Expected: observe <NUMBER>");
         }
-        var gameID = getGameIDFromNumber(params[0]);
+        var game = getGameFromNumber(params[0]);
         BoardPrinter.printBoard(true);
-        return "Observing game " + gameID;
+        return "Observing game " + game.gameName();
     }
 
-    private int getGameIDFromNumber(String numberStr) throws Exception {
+    private GameData getGameFromNumber(String numberStr) throws Exception {
         int number;
         try {
             number = Integer.parseInt(numberStr);
@@ -118,6 +118,6 @@ public class PostloginClient {
         if (number < 1 || number > lastGameList.size()) {
             throw new Exception("No such game number. Try 'list' first");
         }
-        return lastGameList.get(number - 1).gameID();
+        return lastGameList.get(number - 1);
     }
 }
