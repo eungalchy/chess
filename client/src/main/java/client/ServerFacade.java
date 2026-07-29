@@ -76,6 +76,7 @@ public class ServerFacade {
             return HttpRequest.BodyPublishers.noBody();
         }
     }
+
     private HttpResponse<String> sendRequest(HttpRequest request) throws Exception {
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
@@ -83,13 +84,19 @@ public class ServerFacade {
     private <T> T handleResponse(HttpResponse<String> response, Class<T> responseClass) throws Exception {
         var status = response.statusCode();
         if (status / 100 != 2) {
-            throw new Exception("failure: " + status);
+            String message = switch (status) {
+                case 400 -> "Invalid request. Please check your input.";
+                case 401 -> "Unauthorized. Please log in again.";
+                case 403 -> "That username or game is already taken.";
+                default -> "Something went wrong. Please try again.";
+            };
+            throw new Exception(message);
         }
+
         if (responseClass != null) {
             return new Gson().fromJson(response.body(), responseClass);
         }
         return null;
-
     }
 
     public void clear() throws Exception {
