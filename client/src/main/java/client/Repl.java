@@ -52,14 +52,14 @@ public class Repl {
                         System.out.print("\n" + preloginClient.help());
                     }
                 }
-                } catch(Throwable e){
-                    System.out.print(e.getMessage());
-                }
+            } catch (Throwable e) {
+                System.out.print(e.getMessage());
             }
-            System.out.println();
         }
-
-        private void printPrompt () {
-            System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
-        }
+        System.out.println();
     }
+
+    private void printPrompt() {
+        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+    }
+}
