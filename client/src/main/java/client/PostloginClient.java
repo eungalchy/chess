@@ -1,6 +1,7 @@
 package client;
 
 import model.GameData;
+import ui.BoardPrinter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,6 +94,8 @@ public class PostloginClient {
         var gameID = getGameIDFromNumber(params[0]);
         var color = params[1].toUpperCase();
         server.joinGame(authToken, color, gameID);
+        boolean whitePerspective = color.equals("WHITE");
+        BoardPrinter.printBoard(whitePerspective);
         return "Joined game as " + color;
     }
 
@@ -101,6 +104,7 @@ public class PostloginClient {
             throw new Exception("Expected: observe <NUMBER>");
         }
         var gameID = getGameIDFromNumber(params[0]);
+        BoardPrinter.printBoard(true);
         return "Observing game " + gameID;
     }
 
