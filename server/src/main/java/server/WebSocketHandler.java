@@ -19,8 +19,8 @@ public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final GamePlayService gamePlayService;
     private final DataAccess dataAccess;
-    private static final Map<Integer, Map<String, WsMessageContext>> gameSessions = new HashMap<>();
-    private static final Set<Integer> finishedGames = new HashSet<>();
+    private static final Map<Integer, Map<String, WsMessageContext>> GAME_SESSIONS = new HashMap<>();
+    private static final Set<Integer> FINISHED_GAMES = new HashSet<>();
 
     public WebSocketHandler() throws DataAccessException {
         this.dataAccess = new MySqlDataAccess();
@@ -65,7 +65,7 @@ public class WebSocketHandler {
                 return;
             }
 
-            gameSessions.computeIfAbsent(command.getGameID(), k -> new HashMap<>()).put(username, ctx);
+            GAME_SESSIONS.computeIfAbsent(command.getGameID(), k -> new HashMap<>()).put(username, ctx);
             ctx.send(gson.toJson(new LoadGameMessage(game)));
 
             String role;
@@ -87,7 +87,7 @@ public class WebSocketHandler {
             MakeMoveCommand moveCommand = gson.fromJson(message, MakeMoveCommand.class);
             int gameID = moveCommand.getGameID();
 
-            if (finishedGames.contains(gameID)) {
+            if (FINISHED_GAMES.contains(gameID)) {
                 ctx.send(gson.toJson(new ErrorMessage("Error: game is over")));
                 return;
             }
@@ -129,10 +129,10 @@ public class WebSocketHandler {
 
             if (chessGame.isInCheckmate(opponent)) {
                 broadcastToGame(gameID, new NotificationMessage(opponentName + " is in checkmate"));
-                finishedGames.add(gameID);
+                FINISHED_GAMES.add(gameID);
             } else if (chessGame.isInStalemate(opponent)) {
                 broadcastToGame(gameID, new NotificationMessage("Stalemate"));
-                finishedGames.add(gameID);
+                FINISHED_GAMES.add(gameID);
             } else if (chessGame.isInCheck(opponent)) {
                 broadcastToGame(gameID, new NotificationMessage(opponentName + " is in check"));
             }
@@ -155,7 +155,7 @@ public class WebSocketHandler {
         try {
             int gameID = command.getGameID();
 
-            if (finishedGames.contains(gameID)) {
+            if (FINISHED_GAMES.contains(gameID)) {
                 ctx.send(gson.toJson(new ErrorMessage("Error: game is already over")));
                 return;
             }
@@ -167,7 +167,7 @@ public class WebSocketHandler {
                 return;
             }
 
-            finishedGames.add(gameID);
+            FINISHED_GAMES.add(gameID);
             broadcastToGame(gameID, new NotificationMessage(username + " resigned"));
         } catch (Exception e) {
             ctx.send(gson.toJson(new ErrorMessage("Error: " + e.getMessage())));
@@ -175,7 +175,7 @@ public class WebSocketHandler {
     }
 
     private void broadcastToGame(int gameID, ServerMessage message) {
-        Map<String, WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashMap<>());
+        Map<String, WsMessageContext> sessions = GAME_SESSIONS.getOrDefault(gameID, new HashMap<>());
         String json = gson.toJson(message);
         for (WsMessageContext session : sessions.values()) {
             try {
@@ -187,7 +187,7 @@ public class WebSocketHandler {
     }
 
     private void broadcastToOthers(int gameID, String exceptUsername, ServerMessage message) {
-        Map<String, WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashMap<>());
+        Map<String, WsMessageContext> sessions = GAME_SESSIONS.getOrDefault(gameID, new HashMap<>());
         String json = gson.toJson(message);
         for (Map.Entry<String, WsMessageContext> entry : sessions.entrySet()) {
             if (!entry.getKey().equals(exceptUsername)) {
@@ -201,11 +201,11 @@ public class WebSocketHandler {
     }
 
     private void removePlayerFromGame(int gameID, String username) {
-        Map<String, WsMessageContext> sessions = gameSessions.get(gameID);
+        Map<String, WsMessageContext> sessions = GAME_SESSIONS.get(gameID);
         if (sessions != null) {
             sessions.remove(username);
             if (sessions.isEmpty()) {
-                gameSessions.remove(gameID);
+                GAME_SESSIONS.remove(gameID);
             }
         }
     }

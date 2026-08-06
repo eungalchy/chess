@@ -99,7 +99,11 @@ public class GameplayUI {
             int endCol = to.charAt(0) - 'a' + 1;
             int endRow = Character.getNumericValue(to.charAt(1));
 
-            String moveJson = "{\"commandType\":\"MAKE_MOVE\",\"authToken\":\"" + authToken + "\",\"gameID\":" + gameID + ",\"move\":{\"startPosition\":{\"row\":" + startRow + ",\"col\":" + startCol + "},\"endPosition\":{\"row\":" + endRow + ",\"col\":" + endCol + "}}}";
+            String moveJson = "{\"commandType\":\"MAKE_MOVE\",\"authToken\":\""
+                    + authToken + "\",\"gameID\":"
+                    + gameID + ",\"move\":{\"startPosition\":{\"row\":"
+                    + startRow + ",\"col\":" + startCol + "},\"endPosition\":{\"row\":"
+                    + endRow + ",\"col\":" + endCol + "}}}";
             webSocket.sendText(moveJson, true);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -107,10 +111,12 @@ public class GameplayUI {
     }
 
     private class WebSocketListener implements WebSocket.Listener {
+        @Override
         public void onOpen(WebSocket webSocket) {
             webSocket.request(1);
         }
 
+        @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
             try {
                 String json = data.toString();
@@ -139,6 +145,7 @@ public class GameplayUI {
             return null;
         }
 
+        @Override
         public void onError(WebSocket webSocket, Throwable error) {
             System.out.println("Error: " + error.getMessage());
         }
