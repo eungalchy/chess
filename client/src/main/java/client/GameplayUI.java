@@ -3,68 +3,102 @@ package client;
 import com.google.gson.Gson;
 import chess.ChessGame;
 import websocket.commands.ConnectCommand;
-import websocket.messages.LoadGameMessage;
+import websocket.commands.MakeMoveCommand;
+import websocket.commands.LeaveCommand;
+import websocket.commands.ResignCommand;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.util.concurrent.CompletionStage;
+import java.util.Scanner;
 
 public class GameplayUI {
     private final WebSocket webSocket;
     private final String authToken;
     private final int gameID;
-    private ChessGame currentGame;
     private final Gson gson = new Gson();
 
     public GameplayUI(String serverUrl, String authToken, int gameID) throws Exception {
         this.authToken = authToken;
         this.gameID = gameID;
 
-        // WebSocket 연결
         String wsUrl = serverUrl.replace("http", "ws") + "/ws";
         HttpClient client = HttpClient.newHttpClient();
         this.webSocket = client.newWebSocketBuilder()
                 .buildAsync(URI.create(wsUrl), new WebSocketListener())
                 .get();
 
-        // CONNECT 메시지 전송
         ConnectCommand connect = new ConnectCommand(authToken, gameID);
         webSocket.sendText(gson.toJson(connect), true);
     }
 
     public void run() {
-        System.out.println("Game started. Commands: move, resign, leave, quit");
-        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        System.out.println("Game started. Type help for commands.");
+        Scanner scanner = new Scanner(System.in);
 
         while (true) {
             System.out.print(">>> ");
-            String input = scanner.nextLine().toLowerCase();
+            String input = scanner.nextLine().trim();
 
-            if (input.equals("quit")) {
-                break;
+            if (input.isEmpty()) {
+                continue;
             }
 
-            switch (input) {
-                case "help":
-                    printHelp();
-                    break;
-                // TODO: move, resign, leave 구현
-                default:
-                    System.out.println("Unknown command. Type help for options.");
+            String[] parts = input.split(" ");
+            String command = parts[0].toLowerCase();
+
+            try {
+                switch (command) {
+                    case "help":
+                        printHelp();
+                        break;
+                    case "move":
+                        if (parts.length == 3) {
+                            handleMove(parts[1], parts[2]);
+                        } else {
+                            System.out.println("Usage: move <from> <to>");
+                        }
+                        break;
+                    case "resign":
+                        handleResign();
+                        break;
+                    case "leave":
+                        handleLeave();
+                        break;
+                    case "quit":
+                        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Goodbye");
+                        return;
+                    default:
+                        System.out.println("Unknown command. Type help for options.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
             }
         }
+    }
 
-        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Goodbye");
+    private void handleMove(String from, String to) throws Exception {
+        MakeMoveCommand cmd = new MakeMoveCommand(authToken, gameID, null);
+        webSocket.sendText(gson.toJson(cmd), true);
+    }
+
+    private void handleResign() throws Exception {
+        ResignCommand cmd = new ResignCommand(authToken, gameID);
+        webSocket.sendText(gson.toJson(cmd), true);
+    }
+
+    private void handleLeave() throws Exception {
+        LeaveCommand cmd = new LeaveCommand(authToken, gameID);
+        webSocket.sendText(gson.toJson(cmd), true);
     }
 
     private void printHelp() {
-        System.out.println("""
-            move <from> <to> - make a move (e.g., move e2 e4)
-            resign - resign from the game
-            leave - leave the game
-            quit - exit
-            help - show this help
-            """);
+        System.out.println("Commands:");
+        System.out.println("  move <from> <to> - make a move");
+        System.out.println("  resign - resign from game");
+        System.out.println("  leave - leave game");
+        System.out.println("  quit - exit");
+        System.out.println("  help - show this help");
     }
 
     private class WebSocketListener implements WebSocket.Listener {
