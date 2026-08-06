@@ -41,4 +41,23 @@ public class GamePlayService {
             return false;
         }
     }
+
+    public void leaveGame(int gameID, String username) throws DataAccessException {
+        GameData game = getGame(gameID);
+        if (game == null) {
+            return;
+        }
+
+        String white = username.equals(game.whiteUsername()) ? null : game.whiteUsername();
+        String black = username.equals(game.blackUsername()) ? null : game.blackUsername();
+
+        GameData updated = new GameData(
+                game.gameID(),
+                white,
+                black,
+                game.gameName(),
+                game.game()
+        );
+        dataAccess.updateGame(updated);
+    }
 }
