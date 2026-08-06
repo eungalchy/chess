@@ -2,25 +2,26 @@ package client;
 
 import com.google.gson.Gson;
 import websocket.commands.ConnectCommand;
+import websocket.messages.LoadGameMessage;
+import model.GameData;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.util.Scanner;
 import java.util.concurrent.CompletionStage;
-import websocket.messages.LoadGameMessage;
-import ui.BoardPrinter;
-
 
 public class GameplayUI {
     private final WebSocket webSocket;
     private final String authToken;
     private final int gameID;
     private final Gson gson;
+    private final boolean whitePerspective;
 
-    public GameplayUI(String serverUrl, String authToken, int gameID) throws Exception {
+    public GameplayUI(String serverUrl, String authToken, int gameID, boolean whitePerspective) throws Exception {
         this.authToken = authToken;
         this.gameID = gameID;
         this.gson = new Gson();
+        this.whitePerspective = whitePerspective;
 
         String wsUrl = serverUrl.replace("http", "ws") + "/ws";
         HttpClient client = HttpClient.newHttpClient();
@@ -78,35 +79,47 @@ public class GameplayUI {
         System.out.println("Commands: move, resign, leave, quit, help");
     }
 
+    private void handleMove(String from, String to) {
+        try {
+            int startCol = from.charAt(0) - 'a' + 1;
+            int startRow = Character.getNumericValue(from.charAt(1));
+            int endCol = to.charAt(0) - 'a' + 1;
+            int endRow = Character.getNumericValue(to.charAt(1));
+
+            String moveJson = "{\"commandType\":\"MAKE_MOVE\",\"authToken\":\"" + authToken + "\",\"gameID\":" + gameID + ",\"move\":{\"startPosition\":{\"row\":" + startRow + ",\"col\":" + startCol + "},\"endPosition\":{\"row\":" + endRow + ",\"col\":" + endCol + "}}}";
+            webSocket.sendText(moveJson, true);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
     private class WebSocketListener implements WebSocket.Listener {
         public void onOpen(WebSocket webSocket) {
+            webSocket.request(1);
             System.out.println("Connected");
         }
 
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-            System.out.println("\n");
-            BoardPrinter.printBoard(true);
-            System.out.print(">>> ");
+            try {
+                String json = data.toString();
+                if (json.contains("LOAD_GAME")) {
+                    LoadGameMessage msg = gson.fromJson(json, LoadGameMessage.class);
+                    GameData gameData = msg.getGame();
+                    if (gameData != null && gameData.game() != null) {
+                        System.out.println();
+                        ui.BoardPrinter.printBoard(gameData.game().getBoard(), whitePerspective);
+                        System.out.print(">>> ");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+            webSocket.request(1);
             return null;
         }
 
         public void onError(WebSocket webSocket, Throwable error) {
             System.out.println("Error: " + error.getMessage());
-        }
-    }
-
-    private void handleMove(String from, String to) {
-        try {
-            System.out.println("Move: " + from + " to " + to);
-            webSocket.sendText("{\"commandType\":\"MAKE_MOVE\",\"authToken\":\"" + authToken + "\",\"gameID\":" + gameID + "}", true);
-
-            Thread.sleep(1000);
-            System.out.println("\n=== Board ===");
-            BoardPrinter.printBoard(true);
-            System.out.println("=============\n");
-            System.out.print(">>> ");
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 }

@@ -35,8 +35,7 @@ public class WebSocketHandler {
                     handleConnect(ctx, command);
                     break;
                 case MAKE_MOVE:
-                    System.out.println("Handling MAKE_MOVE");
-                    handleMakeMove(ctx, command);
+                    handleMakeMove(ctx, message);
                     break;
                 case LEAVE:
                     handleLeave(ctx, command);
@@ -67,19 +66,22 @@ public class WebSocketHandler {
         }
     }
 
-    private void handleMakeMove(WsMessageContext ctx, UserGameCommand command) {
+    private void handleMakeMove(WsMessageContext ctx, String message) {
         try {
-            System.out.println("Processing MAKE_MOVE for gameID: " + command.getGameID());
-            var game = gamePlayService.getGame(command.getGameID());
-            System.out.println("Game loaded: " + (game != null ? game.gameName() : "null"));
+            MakeMoveCommand moveCommand = gson.fromJson(message, MakeMoveCommand.class);
+            System.out.println("Move parsed: " + moveCommand.getMove());
 
+            boolean success = gamePlayService.makeMove(moveCommand.getGameID(), moveCommand.getMove());
+            System.out.println("Move success: " + success);
+
+            var game = gamePlayService.getGame(moveCommand.getGameID());
             if (game != null) {
-                System.out.println("Broadcasting LOAD_GAME to game " + command.getGameID());
-                broadcastToGame(command.getGameID(), new LoadGameMessage(game));
-                broadcastToGame(command.getGameID(), new NotificationMessage("Move made"));
+                broadcastToGame(moveCommand.getGameID(), new LoadGameMessage(game));
+                broadcastToGame(moveCommand.getGameID(), new NotificationMessage("Move made"));
             }
         } catch (Exception e) {
             System.out.println("Error in handleMakeMove: " + e.getMessage());
+            e.printStackTrace();
             ctx.send(gson.toJson(new ErrorMessage(e.getMessage())));
         }
     }

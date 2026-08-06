@@ -4,6 +4,7 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.GameData;
 import chess.ChessMove;
+import chess.ChessGame;
 
 public class GamePlayService {
     private final DataAccess dataAccess;
@@ -23,7 +24,17 @@ public class GamePlayService {
         }
 
         try {
-            System.out.println("Making move: " + move);
+            ChessGame chessGame = game.game();
+            chessGame.makeMove(move);
+
+            GameData updatedGame = new GameData(
+                    game.gameID(),
+                    game.whiteUsername(),
+                    game.blackUsername(),
+                    game.gameName(),
+                    chessGame
+            );
+            dataAccess.updateGame(updatedGame);
             return true;
         } catch (Exception e) {
             System.out.println("Move error: " + e.getMessage());

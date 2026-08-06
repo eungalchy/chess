@@ -28,7 +28,7 @@ public class PostloginClient {
                 case "list" -> listGames();
                 case "play" -> playGame(params);
                 case "observe" -> observeGame(params);
-                case "quit" -> "qu'it";
+                case "quit" -> "quit";
                 default -> help();
             };
         } catch (Exception ex) {
@@ -94,10 +94,9 @@ public class PostloginClient {
         var game = getGameFromNumber(params[0]);
         var color = params[1].toUpperCase();
         server.joinGame(authToken, color, game.gameID());
-        boolean whitePerspective = color.equals("WHITE");
-        BoardPrinter.printBoard(whitePerspective);
 
-        new GameplayUI("http://localhost:8080", authToken, game.gameID()).run();
+        boolean whitePerspective = color.equals("WHITE");
+        new GameplayUI("http://localhost:8080", authToken, game.gameID(), whitePerspective).run();
 
         System.exit(0);
         return "";
@@ -108,8 +107,11 @@ public class PostloginClient {
             throw new Exception("Expected: observe <NUMBER>");
         }
         var game = getGameFromNumber(params[0]);
-        BoardPrinter.printBoard(true);
-        return "Observing game " + game.gameName();
+
+        new GameplayUI("http://localhost:8080", authToken, game.gameID(), true).run();
+
+        System.exit(0);
+        return "";
     }
 
     private GameData getGameFromNumber(String numberStr) throws Exception {

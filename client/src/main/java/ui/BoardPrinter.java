@@ -78,4 +78,51 @@ public class BoardPrinter {
             default -> EMPTY;
         };
     }
+
+    public static void printBoard(chess.ChessBoard board, boolean whitePerspective) {
+        var columns = "abcdefgh";
+        var out = new StringBuilder();
+
+        int startRow = whitePerspective ? 7 : 0;
+        int endRow = whitePerspective ? -1 : 8;
+        int rowStep = whitePerspective ? -1 : 1;
+
+        out.append(headFooter(whitePerspective, columns));
+        for (int row = startRow; row != endRow; row += rowStep) {
+            out.append(SET_BG_COLOR_LIGHT_GREY).append(" ").append(row + 1).append(" ").append(RESET_BG_COLOR);
+
+            int startCol = whitePerspective ? 0 : 7;
+            int endCol = whitePerspective ? 8 : -1;
+            int colStep = whitePerspective ? 1 : -1;
+
+            for (int col = startCol; col != endCol; col += colStep) {
+                boolean isLight = (row + col) % 2 != 0;
+                out.append(isLight ? SET_BG_COLOR_WHITE : SET_BG_COLOR_GREEN);
+
+                chess.ChessPiece piece = board.getPiece(new chess.ChessPosition(row + 1, col + 1));
+                out.append(pieceSymbol(pieceToString(piece)));
+            }
+
+            out.append(RESET_BG_COLOR);
+            out.append(SET_BG_COLOR_LIGHT_GREY).append(" ").append(row + 1).append(RESET_BG_COLOR);
+            out.append("\n");
+        }
+        out.append(headFooter(whitePerspective, columns));
+        System.out.print(out);
+    }
+
+    private static String pieceToString(chess.ChessPiece piece) {
+        if (piece == null) {
+            return " ";
+        }
+        String type = switch (piece.getPieceType()) {
+            case KING -> "K";
+            case QUEEN -> "Q";
+            case ROOK -> "R";
+            case BISHOP -> "B";
+            case KNIGHT -> "N";
+            case PAWN -> "P";
+        };
+        return piece.getTeamColor() == chess.ChessGame.TeamColor.WHITE ? type : type.toLowerCase();
+    }
 }
