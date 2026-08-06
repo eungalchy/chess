@@ -11,15 +11,15 @@ import dataaccess.MySqlDataAccess;
 import model.AuthData;
 import model.GameData;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final GamePlayService gamePlayService;
     private final DataAccess dataAccess;
-    private static final Map<Integer, Set<WsMessageContext>> gameSessions = new HashMap<>();
+    private static final Map<Integer, Map<String, WsMessageContext>> gameSessions = new HashMap<>();
     private static final Set<Integer> finishedGames = new HashSet<>();
 
     public WebSocketHandler() throws DataAccessException {
@@ -65,7 +65,7 @@ public class WebSocketHandler {
                 return;
             }
 
-            gameSessions.computeIfAbsent(command.getGameID(), k -> new HashSet<>()).add(ctx);
+            gameSessions.computeIfAbsent(command.getGameID(), k -> new HashMap<>()).put(username, ctx);
             ctx.send(gson.toJson(new LoadGameMessage(game)));
 
             String role;
@@ -76,7 +76,7 @@ public class WebSocketHandler {
             } else {
                 role = username + " joined as an observer";
             }
-            broadcastToOthers(command.getGameID(), ctx, new NotificationMessage(role));
+            broadcastToOthers(command.getGameID(), username, new NotificationMessage(role));
         } catch (Exception e) {
             ctx.send(gson.toJson(new ErrorMessage("Error: " + e.getMessage())));
         }
@@ -120,15 +120,15 @@ public class WebSocketHandler {
 
             GameData updated = gamePlayService.getGame(gameID);
             broadcastToGame(gameID, new LoadGameMessage(updated));
-            broadcastToOthers(gameID, ctx, new NotificationMessage(username + " made a move"));
+            broadcastToOthers(gameID, username, new NotificationMessage(username + " made a move"));
         } catch (Exception e) {
             ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
         }
     }
 
     private void handleLeave(WsMessageContext ctx, UserGameCommand command, String username) {
-        removePlayerFromGame(command.getGameID(), ctx);
-        broadcastToOthers(command.getGameID(), ctx, new NotificationMessage(username + " left the game"));
+        removePlayerFromGame(command.getGameID(), username);
+        broadcastToOthers(command.getGameID(), username, new NotificationMessage(username + " left the game"));
     }
 
     private void handleResign(WsMessageContext ctx, UserGameCommand command, String username) {
@@ -155,9 +155,9 @@ public class WebSocketHandler {
     }
 
     private void broadcastToGame(int gameID, ServerMessage message) {
-        Set<WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashSet<>());
+        Map<String, WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashMap<>());
         String json = gson.toJson(message);
-        for (WsMessageContext session : sessions) {
+        for (WsMessageContext session : sessions.values()) {
             try {
                 session.send(json);
             } catch (Exception e) {
@@ -166,13 +166,13 @@ public class WebSocketHandler {
         }
     }
 
-    private void broadcastToOthers(int gameID, WsMessageContext except, ServerMessage message) {
-        Set<WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashSet<>());
+    private void broadcastToOthers(int gameID, String exceptUsername, ServerMessage message) {
+        Map<String, WsMessageContext> sessions = gameSessions.getOrDefault(gameID, new HashMap<>());
         String json = gson.toJson(message);
-        for (WsMessageContext session : sessions) {
-            if (session != except) {
+        for (Map.Entry<String, WsMessageContext> entry : sessions.entrySet()) {
+            if (!entry.getKey().equals(exceptUsername)) {
                 try {
-                    session.send(json);
+                    entry.getValue().send(json);
                 } catch (Exception e) {
                     // ignore
                 }
@@ -180,10 +180,10 @@ public class WebSocketHandler {
         }
     }
 
-    private void removePlayerFromGame(int gameID, WsMessageContext ctx) {
-        Set<WsMessageContext> sessions = gameSessions.get(gameID);
+    private void removePlayerFromGame(int gameID, String username) {
+        Map<String, WsMessageContext> sessions = gameSessions.get(gameID);
         if (sessions != null) {
-            sessions.remove(ctx);
+            sessions.remove(username);
             if (sessions.isEmpty()) {
                 gameSessions.remove(gameID);
             }
