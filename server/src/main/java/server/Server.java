@@ -76,6 +76,26 @@ public class Server {
             ctx.result("{}");
         });
 
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(ctx -> {
+                System.out.println("Client connected");
+            });
+
+            ws.onMessage(ctx -> {
+                String message = ctx.message();
+                System.out.println("Received: " + message);
+                // 나중에 여기서 메시지 처리
+            });
+
+            ws.onClose(ctx -> {
+                System.out.println("Client disconnected");
+            });
+
+            ws.onError(ctx -> {
+                System.out.println("WebSocket error: " + ctx.error());
+            });
+        });
+
         javalin.exception(DataAccessException.class, (e, ctx) -> {
             String message = e.getMessage();
             int status;
