@@ -83,8 +83,7 @@ public class Server {
 
             ws.onMessage(ctx -> {
                 String message = ctx.message();
-                System.out.println("Received: " + message);
-                // 나중에 여기서 메시지 처리
+                new WebSocketHandler().handleMessage(ctx, message);
             });
 
             ws.onClose(ctx -> {
