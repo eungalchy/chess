@@ -96,7 +96,11 @@ public class PostloginClient {
         server.joinGame(authToken, color, game.gameID());
         boolean whitePerspective = color.equals("WHITE");
         BoardPrinter.printBoard(whitePerspective);
-        return "Joined game as " + color;
+
+        new GameplayUI("http://localhost:8080", authToken, game.gameID()).run();
+
+        System.exit(0);
+        return "";
     }
 
     public String observeGame(String... params) throws Exception {

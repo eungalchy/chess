@@ -21,6 +21,13 @@ public class GamePlayService {
         if (game == null) {
             throw new DataAccessException("Game not found");
         }
-        return true;
+
+        try {
+            System.out.println("Making move: " + move);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Move error: " + e.getMessage());
+            return false;
+        }
     }
 }

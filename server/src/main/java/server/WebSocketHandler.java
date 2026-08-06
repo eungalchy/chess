@@ -20,8 +20,10 @@ public class WebSocketHandler {
     }
 
     public void handleMessage(WsMessageContext ctx, String message) {
+        System.out.println("Received message: " + message);
         try {
             UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+            System.out.println("Command type: " + command.getCommandType());
 
             if (command == null) {
                 ctx.send(gson.toJson(new ErrorMessage("Invalid command")));
@@ -33,7 +35,8 @@ public class WebSocketHandler {
                     handleConnect(ctx, command);
                     break;
                 case MAKE_MOVE:
-                    handleMakeMove(ctx, (MakeMoveCommand) command);
+                    System.out.println("Handling MAKE_MOVE");
+                    handleMakeMove(ctx, command);
                     break;
                 case LEAVE:
                     handleLeave(ctx, command);
@@ -43,6 +46,7 @@ public class WebSocketHandler {
                     break;
             }
         } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
             ctx.send(gson.toJson(new ErrorMessage("Error: " + e.getMessage())));
         }
     }
@@ -52,22 +56,30 @@ public class WebSocketHandler {
             var game = gamePlayService.getGame(command.getGameID());
 
             gameSessions.computeIfAbsent(command.getGameID(), k -> new HashSet<>()).add(ctx);
+            System.out.println("Player connected to game " + command.getGameID());
+            System.out.println("Total sessions for game: " + gameSessions.get(command.getGameID()).size());
 
             ctx.send(gson.toJson(new LoadGameMessage(game)));
             broadcastToGame(command.getGameID(), new NotificationMessage("Player connected"));
         } catch (Exception e) {
+            System.out.println("Error in handleConnect: " + e.getMessage());
             ctx.send(gson.toJson(new ErrorMessage(e.getMessage())));
         }
     }
 
-    private void handleMakeMove(WsMessageContext ctx, MakeMoveCommand command) {
+    private void handleMakeMove(WsMessageContext ctx, UserGameCommand command) {
         try {
-            boolean success = gamePlayService.makeMove(command.getGameID(), command.getMove());
+            System.out.println("Processing MAKE_MOVE for gameID: " + command.getGameID());
             var game = gamePlayService.getGame(command.getGameID());
+            System.out.println("Game loaded: " + (game != null ? game.gameName() : "null"));
 
-            broadcastToGame(command.getGameID(), new LoadGameMessage(game));
-            broadcastToGame(command.getGameID(), new NotificationMessage("Move made"));
+            if (game != null) {
+                System.out.println("Broadcasting LOAD_GAME to game " + command.getGameID());
+                broadcastToGame(command.getGameID(), new LoadGameMessage(game));
+                broadcastToGame(command.getGameID(), new NotificationMessage("Move made"));
+            }
         } catch (Exception e) {
+            System.out.println("Error in handleMakeMove: " + e.getMessage());
             ctx.send(gson.toJson(new ErrorMessage(e.getMessage())));
         }
     }
