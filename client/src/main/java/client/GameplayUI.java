@@ -95,7 +95,26 @@ public class GameplayUI {
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-            System.out.println("Server: " + data);
+            try {
+                String json = data.toString();
+
+                if (json.contains("\"serverMessageType\":\"LOAD_GAME\"")) {
+                    System.out.println("\n=== Game State Updated ===");
+                    LoadGameMessage msg = gson.fromJson(json, LoadGameMessage.class);
+                    System.out.println("Game: " + msg.getGame().gameName());
+                    System.out.println(">>> ");
+                } else if (json.contains("\"serverMessageType\":\"NOTIFICATION\"")) {
+                    NotificationMessage msg = gson.fromJson(json, NotificationMessage.class);
+                    System.out.println("\n[Server] " + msg.getMessage());
+                    System.out.print(">>> ");
+                } else if (json.contains("\"serverMessageType\":\"ERROR\"")) {
+                    ErrorMessage msg = gson.fromJson(json, ErrorMessage.class);
+                    System.out.println("\n[Error] " + msg.getErrorMessage());
+                    System.out.print(">>> ");
+                }
+            } catch (Exception e) {
+                System.out.println("Failed to parse message: " + e.getMessage());
+            }
             return null;
         }
 
