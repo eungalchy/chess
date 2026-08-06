@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import websocket.commands.ConnectCommand;
 import websocket.messages.LoadGameMessage;
 import model.GameData;
+import chess.ChessBoard;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -16,6 +17,7 @@ public class GameplayUI {
     private final int gameID;
     private final Gson gson;
     private final boolean whitePerspective;
+    private ChessBoard currentBoard;
 
     public GameplayUI(String serverUrl, String authToken, int gameID, boolean whitePerspective) throws Exception {
         this.authToken = authToken;
@@ -35,7 +37,6 @@ public class GameplayUI {
     }
 
     public void run() {
-        System.out.println("Game started. Type help for commands.");
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
@@ -52,6 +53,13 @@ public class GameplayUI {
             switch (command) {
                 case "help":
                     printHelp();
+                    break;
+                case "redraw":
+                    if (currentBoard != null) {
+                        ui.BoardPrinter.printBoard(currentBoard, whitePerspective);
+                    } else {
+                        System.out.println("No board to redraw yet.");
+                    }
                     break;
                 case "move":
                     if (parts.length == 3) {
@@ -76,7 +84,12 @@ public class GameplayUI {
     }
 
     private void printHelp() {
-        System.out.println("Commands: move, resign, leave, quit, help");
+        System.out.println("Commands:");
+        System.out.println("  help - show this help");
+        System.out.println("  redraw - redraw the chess board");
+        System.out.println("  move <from> <to> - make a move (e.g., move e2 e4)");
+        System.out.println("  resign - resign from the game");
+        System.out.println("  leave - leave the game");
     }
 
     private void handleMove(String from, String to) {
@@ -96,7 +109,6 @@ public class GameplayUI {
     private class WebSocketListener implements WebSocket.Listener {
         public void onOpen(WebSocket webSocket) {
             webSocket.request(1);
-            System.out.println("Connected");
         }
 
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
@@ -106,10 +118,19 @@ public class GameplayUI {
                     LoadGameMessage msg = gson.fromJson(json, LoadGameMessage.class);
                     GameData gameData = msg.getGame();
                     if (gameData != null && gameData.game() != null) {
+                        currentBoard = gameData.game().getBoard();
                         System.out.println();
-                        ui.BoardPrinter.printBoard(gameData.game().getBoard(), whitePerspective);
+                        ui.BoardPrinter.printBoard(currentBoard, whitePerspective);
                         System.out.print(">>> ");
                     }
+                } else if (json.contains("NOTIFICATION")) {
+                    var msg = gson.fromJson(json, java.util.Map.class);
+                    System.out.println("\n[NOTIFICATION] " + msg.get("message"));
+                    System.out.print(">>> ");
+                } else if (json.contains("ERROR")) {
+                    var msg = gson.fromJson(json, java.util.Map.class);
+                    System.out.println("\n[ERROR] " + msg.get("errorMessage"));
+                    System.out.print(">>> ");
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
