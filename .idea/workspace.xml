@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="48758174-0b00-4e58-b9a1-bdda13d86834" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/client/GameplayUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/client/GameplayUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/client/PostloginClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/client/PostloginClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/ui/BoardPrinter.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/ui/BoardPrinter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/server/Server.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/server/WebSocketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/server/WebSocketHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/service/GamePlayService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/service/GamePlayService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -120,9 +120,12 @@ public class WebSocketHandler {
 
             GameData updated = gamePlayService.getGame(gameID);
             broadcastToGame(gameID, new LoadGameMessage(updated));
-            broadcastToOthers(gameID, username, new NotificationMessage(username + " made a move"));
 
-            // check/checkmate/stalemate 확인
+            var move = moveCommand.getMove();
+            String moveDesc = positionToString(move.getStartPosition())
+                    + " to " + positionToString(move.getEndPosition());
+            broadcastToOthers(gameID, username, new NotificationMessage(username + " moved " + moveDesc));
+
             chess.ChessGame chessGame = updated.game();
             chess.ChessGame.TeamColor opponent = whiteTurn ? chess.ChessGame.TeamColor.BLACK : chess.ChessGame.TeamColor.WHITE;
             String opponentName = whiteTurn ? updated.blackUsername() : updated.whiteUsername();
@@ -139,6 +142,11 @@ public class WebSocketHandler {
         } catch (Exception e) {
             ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
         }
+    }
+
+    private String positionToString(chess.ChessPosition pos) {
+        char col = (char) ('a' + pos.getColumn() - 1);
+        return "" + col + pos.getRow();
     }
 
     private void handleLeave(WsMessageContext ctx, UserGameCommand command, String username) {

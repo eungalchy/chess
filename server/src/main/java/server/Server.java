@@ -79,6 +79,7 @@ public class Server {
         javalin.ws("/ws", ws -> {
             ws.onConnect(ctx -> {
                 System.out.println("Client connected");
+                ctx.enableAutomaticPings();
             });
 
             ws.onMessage(ctx -> {

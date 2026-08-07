@@ -98,7 +98,6 @@ public class PostloginClient {
         boolean whitePerspective = color.equals("WHITE");
         new GameplayUI("http://localhost:8080", authToken, game.gameID(), whitePerspective).run();
 
-        System.exit(0);
         return "";
     }
 
@@ -110,7 +109,6 @@ public class PostloginClient {
 
         new GameplayUI("http://localhost:8080", authToken, game.gameID(), true).run();
 
-        System.exit(0);
         return "";
     }
 

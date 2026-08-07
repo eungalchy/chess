@@ -18,6 +18,7 @@ public class GameplayUI {
     private final Gson gson;
     private final boolean whitePerspective;
     private ChessBoard currentBoard;
+    private chess.ChessGame currentGame;
 
     public GameplayUI(String serverUrl, String authToken, int gameID, boolean whitePerspective) throws Exception {
         this.authToken = authToken;
@@ -61,6 +62,13 @@ public class GameplayUI {
                         System.out.println("No board to redraw yet.");
                     }
                     break;
+                case "highlight":
+                    if (parts.length == 2) {
+                        handleHighlight(parts[1]);
+                    } else {
+                        System.out.println("Usage: highlight <position> (e.g., highlight e2)");
+                    }
+                    break;
                 case "move":
                     if (parts.length == 3) {
                         handleMove(parts[1], parts[2]);
@@ -69,8 +77,14 @@ public class GameplayUI {
                     }
                     break;
                 case "resign":
-                    webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "resign");
-                    return;
+                    System.out.print("Are you sure you want to resign? (yes/no): ");
+                    String confirm = scanner.nextLine().trim().toLowerCase();
+                    if (confirm.equals("yes")) {
+                        sendResign();
+                    } else {
+                        System.out.println("Resign cancelled.");
+                    }
+                    break;
                 case "leave":
                     webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "leave");
                     return;
@@ -80,6 +94,17 @@ public class GameplayUI {
                 default:
                     System.out.println("Unknown command");
             }
+        }
+    }
+
+    private void sendResign() {
+        try {
+            String json = "{\"commandType\":\"RESIGN\","
+                    + "\"authToken\":\"" + authToken + "\","
+                    + "\"gameID\":" + gameID + "}";
+            webSocket.sendText(json, true);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -110,6 +135,29 @@ public class GameplayUI {
         }
     }
 
+    private void handleHighlight(String position) {
+        if (currentGame == null || currentBoard == null) {
+            System.out.println("No game loaded yet.");
+            return;
+        }
+        try {
+            int col = position.charAt(0) - 'a' + 1;
+            int row = Character.getNumericValue(position.charAt(1));
+            chess.ChessPosition pos = new chess.ChessPosition(row, col);
+
+            java.util.Collection<chess.ChessMove> moves = currentGame.validMoves(pos);
+            java.util.Collection<chess.ChessPosition> highlights = new java.util.ArrayList<>();
+            if (moves != null) {
+                for (chess.ChessMove m : moves) {
+                    highlights.add(m.getEndPosition());
+                }
+            }
+            ui.BoardPrinter.printBoardHighlighted(currentBoard, whitePerspective, pos, highlights);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
     private class WebSocketListener implements WebSocket.Listener {
         @Override
         public void onOpen(WebSocket webSocket) {
@@ -124,6 +172,7 @@ public class GameplayUI {
                     LoadGameMessage msg = gson.fromJson(json, LoadGameMessage.class);
                     GameData gameData = msg.getGame();
                     if (gameData != null && gameData.game() != null) {
+                        currentGame = gameData.game();
                         currentBoard = gameData.game().getBoard();
                         System.out.println();
                         ui.BoardPrinter.printBoard(currentBoard, whitePerspective);

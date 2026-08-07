@@ -125,4 +125,48 @@ public class BoardPrinter {
         };
         return piece.getTeamColor() == chess.ChessGame.TeamColor.WHITE ? type : type.toLowerCase();
     }
+
+    public static void printBoardHighlighted(chess.ChessBoard board, boolean whitePerspective,
+                                             chess.ChessPosition selected,
+                                             java.util.Collection<chess.ChessPosition> highlights) {
+
+        var columns = "abcdefgh";
+        var out = new StringBuilder();
+
+        int startRow = whitePerspective ? 7 : 0;
+        int endRow = whitePerspective ? -1 : 8;
+        int rowStep = whitePerspective ? -1 : 1;
+
+        out.append(headFooter(whitePerspective, columns));
+        for (int row = startRow; row != endRow; row += rowStep) {
+            out.append(SET_BG_COLOR_LIGHT_GREY).append(" ").append(row + 1).append(" ").append(RESET_BG_COLOR);
+
+            int startCol = whitePerspective ? 0 : 7;
+            int endCol = whitePerspective ? 8 : -1;
+            int colStep = whitePerspective ? 1 : -1;
+
+            for (int col = startCol; col != endCol; col += colStep) {
+                chess.ChessPosition pos = new chess.ChessPosition(row + 1, col + 1);
+                boolean isLight = (row + col) % 2 != 0;
+
+                if (selected != null && pos.equals(selected)) {
+                    out.append(SET_BG_COLOR_YELLOW);
+                } else if (highlights != null && highlights.contains(pos)) {
+                    out.append(SET_BG_COLOR_YELLOW);
+                } else {
+                    out.append(isLight ? SET_BG_COLOR_WHITE : SET_BG_COLOR_GREEN);
+                }
+
+                chess.ChessPiece piece = board.getPiece(pos);
+                out.append(pieceSymbol(pieceToString(piece)));
+            }
+
+            out.append(RESET_BG_COLOR);
+            out.append(SET_BG_COLOR_LIGHT_GREY).append(" ").append(row + 1).append(RESET_BG_COLOR);
+            out.append("\n");
+        }
+        out.append(headFooter(whitePerspective, columns));
+        System.out.print(out);
+    }
+
 }
